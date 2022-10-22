@@ -29,7 +29,8 @@ class UpSampleConv2D(jit.ScriptModule):
         # 3. Apply convolution.
         # Hint for 2. look at
         # https://pytorch.org/docs/master/generated/torch.nn.PixelShuffle.html#torch.nn.PixelShuffle
-        x = torch.repeat_interleave(x, self.upscale_factor**2, dim=1)
+        for _ in range(int(self.upscale_factor**2)):
+            x = torch.cat((x,x), dim=1)
         x = self.pixel_shuffle(x)
         x = self.conv(x)
         return x
