@@ -25,7 +25,9 @@ def compute_generator_loss(discrim_fake):
 
 if __name__ == "__main__":
     gen = Generator().cuda().to(memory_format=torch.channels_last)
+    print(gen)
     disc = Discriminator().cuda().to(memory_format=torch.channels_last)
+    print(disc)
     prefix = "data_gan/"
     os.makedirs(prefix, exist_ok=True)
 
@@ -38,5 +40,5 @@ if __name__ == "__main__":
         prefix=prefix,
         gen_loss_fn=compute_generator_loss,
         disc_loss_fn=compute_discriminator_loss,
-        log_period=1000,
+        log_period=100,
     )

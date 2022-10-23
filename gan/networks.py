@@ -29,11 +29,12 @@ class UpSampleConv2D(jit.ScriptModule):
         # 3. Apply convolution.
         # Hint for 2. look at
         # https://pytorch.org/docs/master/generated/torch.nn.PixelShuffle.html#torch.nn.PixelShuffle
-        for _ in range(int(self.upscale_factor**2)):
-            x = torch.cat((x,x), dim=1)
-        x = self.pixel_shuffle(x)
-        x = self.conv(x)
-        return x
+        result = x.clone().detach()
+        for _ in range(int(self.upscale_factor**2)-1):
+            result = torch.cat((result,x), dim=1)
+        result = self.pixel_shuffle(result)
+        result = self.conv(result)
+        return result
 
 
 class DownSampleConv2D(jit.ScriptModule):
@@ -228,28 +229,22 @@ class Generator(jit.ScriptModule):
 
     def __init__(self, starting_image_size=4):
         super(Generator, self).__init__()
-        self.starting_image_size = starting_image_size
         self.dense = nn.Linear(in_features=128, out_features=2048, bias=True)
-        self.layers = nn.Sequential(
-            ResBlockUp(128, n_filters=128, kernel_size=3),
-            ResBlockUp(128, n_filters=128, kernel_size=3),
-            ResBlockUp(128, n_filters=128, kernel_size=3),
-            nn.BatchNorm2d(128, eps=1e-05, momentum=0.1,
-                           affine=True, track_running_stats=True),
-            nn.ReLU(),
-            nn.Conv2d(128, 3, kernel_size=(3, 3),
-                      stride=(1, 1), padding=(1, 1)),
-            nn.Tanh()
-        )
+        self.layers = nn.Sequential(ResBlockUp(128),ResBlockUp(128),ResBlockUp(128),
+        nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+        nn.ReLU(),
+        nn.Conv2d(128, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+        nn.Tanh())
+        self.starting_image_size = starting_image_size
 
     @jit.script_method
     def forward_given_samples(self, z):
         # TODO 1.1: forward the generator assuming a set of samples z have been passed in.
         # Don't forget to re-shape the output of the dense layer into an image with the appropriate size!
-        z = self.dense(z)
-        z = z.view(z.size(0), z.size(1), self.starting_image_size, self.starting_image_size)
-        z = self.layers(z)
-        return z
+        x = self.dense(z)
+        x = x.view(z.size(0), z.size(1), self.starting_image_size, self.starting_image_size)
+        x = self.layers(x)
+        return x
 
     @jit.script_method
     def forward(self, n_samples: int = 1024):

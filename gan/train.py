@@ -27,7 +27,7 @@ def get_optimizers_and_schedulers(gen, disc):
     optim_discriminator = torch.optim.Adam(disc.parameters(), lr=0.0002, betas=[0.0, 0.9])
     scheduler_discriminator = torch.optim.lr_scheduler.LambdaLR(optim_discriminator, lambda iter : 1.0-(iter/5e5))
     optim_generator = torch.optim.Adam(gen.parameters(), lr=0.0002, betas=[0.0, 0.9])
-    scheduler_generator = torch.optim.lr_scheduler.LambdaLR(optim_discriminator, lambda iter : 1.0-(iter/1e5))
+    scheduler_generator = torch.optim.lr_scheduler.LambdaLR(optim_generator, lambda iter : 1.0-(iter/1e5))
     return (
         optim_discriminator,
         scheduler_discriminator,
@@ -110,6 +110,9 @@ def train_model(
             scaler.step(optim_discriminator)
             scheduler_discriminator.step()
 
+            if iters % 50 == 0:
+                print(iters)
+
             if iters % 5 == 0:
                 with torch.cuda.amp.autocast():
                     # TODO 1.2: Compute samples and evaluate under discriminator.
@@ -127,7 +130,7 @@ def train_model(
                     with torch.cuda.amp.autocast():
                         # TODO 1.2: Generate samples using the generator, make sure they lie in the range [0, 1].
                         generated_samples = gen.forward(100).detach()
-                        generated_samples = (generated_samples+1)/2 # originally [-1,1]
+                        generated_samples = (generated_samples+1)/2. # originally [-1,1]
 
                     save_image(
                         generated_samples.data.float(),
