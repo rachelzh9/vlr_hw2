@@ -94,7 +94,7 @@ def train_model(
                 # 3. Compute the discriminator output on the generated data.
                 gen_output = gen.forward(train_batch.shape[0])
                 discrim_real = disc.forward(train_batch)
-                discrim_fake = disc.forward(gen_output.detach())
+                discrim_fake = disc.forward(gen_output)
 
                 # TODO: 1.5 Compute the interpolated batch and run the discriminator on it.
                 # To compute interpolated data, draw eps ~ Uniform(0, 1)
@@ -117,7 +117,7 @@ def train_model(
                 with torch.cuda.amp.autocast():
                     # TODO 1.2: Compute samples and evaluate under discriminator.
                     gen_output = gen.forward(train_batch.shape[0])
-                    discrim_fake = disc.forward(gen_output.detach())
+                    discrim_fake = disc.forward(gen_output)
 
                     generator_loss = gen_loss_fn(discrim_fake)
                 optim_generator.zero_grad(set_to_none=True)

@@ -230,11 +230,14 @@ class Generator(jit.ScriptModule):
     def __init__(self, starting_image_size=4):
         super(Generator, self).__init__()
         self.dense = nn.Linear(in_features=128, out_features=2048, bias=True)
-        self.layers = nn.Sequential(ResBlockUp(128),ResBlockUp(128),ResBlockUp(128),
-        nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-        nn.ReLU(),
-        nn.Conv2d(128, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-        nn.Tanh())
+        self.layers = nn.Sequential(
+                        ResBlockUp(128),
+                        ResBlockUp(128),
+                        ResBlockUp(128),
+                        nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+                        nn.ReLU(),
+                        nn.Conv2d(128, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+                        nn.Tanh())
         self.starting_image_size = starting_image_size
 
     @jit.script_method
@@ -250,9 +253,9 @@ class Generator(jit.ScriptModule):
     def forward(self, n_samples: int = 1024):
         # TODO 1.1: Generate n_samples latents and forward through the network.
         # Make sure to cast the latents to type half (for compatibility with torch.cuda.amp.autocast)
-        samples = torch.randn((n_samples, 128)).to(device = ("cuda"))
-        samples = self.forward_given_samples(samples.half())
-        return samples
+        samples = torch.randn(n_samples, 128, device='cuda')
+        result = self.forward_given_samples(samples.half())
+        return result
 
 
 class Discriminator(jit.ScriptModule):

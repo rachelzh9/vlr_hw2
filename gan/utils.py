@@ -39,6 +39,6 @@ def interpolate_latent_space(gen, path):
     samples = torch.randn((100,128)).to("cuda")
     samples[:,0] = torch.linspace(-1., 1., 100)
     samples[:,1] = torch.linspace(-1., 1., 100)
-    gen_out = gen.forward(samples)
+    gen_out = gen.forward_given_samples(samples)
     gen_out = (gen_out+1.)/2
     save_image(gen_out.data.float(), path, nrow=10)
