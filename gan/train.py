@@ -99,8 +99,9 @@ def train_model(
                 # TODO: 1.5 Compute the interpolated batch and run the discriminator on it.
                 # To compute interpolated data, draw eps ~ Uniform(0, 1)
                 # interpolated data = eps * fake_data + (1-eps) * real_data
-                interp = None
-                discrim_interp = None
+                eps = torch.randn((1,)).item()
+                interp = eps * gen_output + (1-eps) * train_batch
+                discrim_interp = disc.forward(interp)
 
                 discriminator_loss = disc_loss_fn(
                     discrim_real, discrim_fake, discrim_interp, interp, lamb
