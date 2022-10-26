@@ -46,12 +46,13 @@ class VAEEncoder(Encoder):
     def __init__(self, input_shape, latent_dim):
         super().__init__(input_shape, latent_dim)
         # TODO 2.2.1: fill in self.fc, such that output dimension is 2*self.latent_dim
-        self.fc = ...
+        self.fc = nn.Linear(self.input_shape, 2*self.latent_dim)
 
     def forward(self, x):
         # TODO 2.2.1: forward pass through the network.
         # should return a tuple of 2 tensors, each of dimension self.latent_dim
-        pass
+        output = self.fc(self.convs(x).view(-1, self.conv_out_dim))
+        return torch.tensor_split(output, 2, dim=1)
 
 
 class Decoder(nn.Module):
