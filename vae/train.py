@@ -27,11 +27,13 @@ def ae_loss(model, x):
 
 def vae_loss(model, x, beta=1):
     """TODO 2.2.2 : Fill in recon_loss and kl_loss."""
-    mn, std = model.encoder(x)
-    latent_sample = torch.normal(mn, std)
-    output = model.decoder(latent_sample)
-    recon_loss = F.mse_loss(output, x).mean(dim=0)
-    kl_loss = F.kl_div(output, x).mean(dim=0)
+    mu, log_var = model.encoder(x)
+    std = torch.exp(0.5*log_var)
+    eps = torch.randn_like(std)
+    latent_sample = eps.mul(std).add_(mu)
+    recon_loss = F.mse_loss(model.decoder(latent_sample), x, reduction='sum') / x.shape[0]
+    kl_loss =  0.5 * (-log_var - 1 + log_var.exp() + mu.pow(2))
+    kl_loss = kl_loss.sum(dim=1).mean()
 
     total_loss = recon_loss + beta * kl_loss
     return total_loss, OrderedDict(recon_loss=recon_loss, kl_loss=kl_loss)
@@ -121,7 +123,6 @@ def main(
 
     train_loss = []
     valid_loss = []
-    fig_loss = plt.figure()
     for epoch in range(num_epochs):
         print("epoch", epoch)
         train_metrics = run_train_epoch(
@@ -178,7 +179,23 @@ if __name__ == "__main__":
     # plt.savefig("data/train_losses.png")
 
     # Q 2.2 - Variational Auto-Encoder
-    main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    train_loss_epoch, valid_loss_epoch = main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    fig2 = plt.figure(2)
+    fig2.set_tight_layout(False)
+    plt.figure(fig2)
+    plt.clf()
+    plt.plot(valid_loss_epoch)
+    plt.title("Validation loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.savefig("data/vae_valid_losses.png")
+    plt.clf()
+    plt.plot(train_loss_epoch)
+    plt.title("Training loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.savefig("data/vae_train_losses.png")
+
 
     # Q 2.3.1 - Beta-VAE (constant beta)
     # Run for beta values 0.8, 1.2

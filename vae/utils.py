@@ -48,7 +48,7 @@ def save_samples(samples, fname, nrow=6, title='Samples'):
    
     plt.title(title)
     plt.imshow(grid_img.permute(1, 2, 0))
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(fname)
 
 def vis_samples(model, _file, num_samples = 49):
