@@ -98,12 +98,17 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
     elif beta_mode == 'linear':
         beta_fn = linear_beta_scheduler(max_epochs=num_epochs, target_val = target_beta_val) 
 
+    train_loss = []
+    valid_loss = []
+    fig_loss = plt.figure()
     for epoch in range(num_epochs):
         print('epoch', epoch)
         train_metrics = run_train_epoch(model, loss_mode, train_loader, optimizer, beta_fn(epoch))
         val_metrics = get_val_metrics(model, loss_mode, val_loader)
 
-        #TODO : add plotting code for metrics (required for multiple parts)
+        #TODO : add plotting code for metrics (required for multiple parts
+        train_loss.append(train_metrics['recon_loss'])
+        valid_loss.append(val_metrics['recon_loss'])
 
         if (epoch+1)%eval_interval == 0:
             print(epoch, train_metrics)
@@ -113,13 +118,39 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
             if loss_mode == 'vae':
                 vis_samples(model, 'data/'+log_dir+ '/epoch_'+str(epoch) )
 
+    return train_loss, valid_loss
+
 
 if __name__ == '__main__':
-    pass
     #TODO: Experiments to run : 
     #2.1 - Auto-Encoder
     #Run for latent_sizes 16, 128 and 1024
-    main('ae_latent1024', loss_mode = 'ae',  num_epochs = 20, latent_size = 16)
+    valid_loss = []
+    train_loss = []
+    ls_arr = [16, 128, 1024]
+    for ls in ls_arr:
+        train_loss_epoch, valid_loss_epoch = main('ae_latent1024_'+str(ls), loss_mode = 'ae',  num_epochs = 20, latent_size = ls)
+        valid_loss.append(valid_loss_epoch)
+        train_loss.append(train_loss_epoch)
+    fig1 = plt.figure(1)
+    plt.figure(fig1)
+    plt.clf()
+    fig1.set_tight_layout(False)
+    for i in range(len(ls_arr)):
+        plt.plot(valid_loss[i])
+    plt.title("Validation loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.legend([str(ls) for ls in ls_arr])
+    plt.savefig('data/valid_losses.png')
+    plt.clf()
+    for i in range(len(ls_arr)):
+        plt.plot(train_loss[i])
+    plt.title("Training loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.legend([str(ls) for ls in ls_arr])
+    plt.savefig('data/train_losses.png')
 
     #Q 2.2 - Variational Auto-Encoder
     #main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
