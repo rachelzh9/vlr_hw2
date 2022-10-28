@@ -19,9 +19,7 @@ def ae_loss(model, x):
     TODO 2.1.2: fill in MSE loss between x and its reconstruction.
     return loss, {recon_loss = loss}
     """
-    loss = F.mse_loss(model.decoder(model.encoder(x)), x)
-    loss = loss.mean(dim=0)
-
+    loss = F.mse_loss(model.decoder(model.encoder(x)), x, reduction='sum') / x.shape[0]
     return loss, OrderedDict(recon_loss=loss)
 
 
@@ -121,8 +119,10 @@ def main(
             max_epochs=num_epochs, target_val=target_beta_val
         )
 
-    train_loss = []
-    valid_loss = []
+    train_loss_recon = []
+    train_loss_kl = []
+    valid_loss_recon = []
+    valid_loss_kl = []
     for epoch in range(num_epochs):
         print("epoch", epoch)
         train_metrics = run_train_epoch(
@@ -131,8 +131,11 @@ def main(
         val_metrics = get_val_metrics(model, loss_mode, val_loader)
 
         # TODO : add plotting code for metrics (required for multiple parts
-        train_loss.append(train_metrics["recon_loss"])
-        valid_loss.append(val_metrics["recon_loss"])
+        train_loss_recon.append(train_metrics["recon_loss"])
+        valid_loss_recon.append(val_metrics["recon_loss"])
+        if variational:
+            train_loss_kl.append(train_metrics["kl_loss"])
+            valid_loss_kl.append(val_metrics["kl_loss"])
 
         if (epoch + 1) % eval_interval == 0:
             print(epoch, train_metrics)
@@ -142,7 +145,7 @@ def main(
             if loss_mode == "vae":
                 vis_samples(model, "data/" + log_dir + "/epoch_" + str(epoch))
 
-    return train_loss, valid_loss
+    return train_loss_recon, valid_loss_recon, train_loss_kl, valid_loss_kl
 
 
 if __name__ == "__main__":
@@ -153,7 +156,7 @@ if __name__ == "__main__":
     # train_loss = []
     # ls_arr = [16, 128, 1024]
     # for ls in ls_arr:
-    #     train_loss_epoch, valid_loss_epoch = main(
+    #     train_loss_epoch, valid_loss_epoch, _, _ = main(
     #         "ae_latent1024_" + str(ls), loss_mode="ae", num_epochs=20, latent_size=ls
     #     )
     #     valid_loss.append(valid_loss_epoch)
@@ -179,27 +182,42 @@ if __name__ == "__main__":
     # plt.savefig("data/train_losses.png")
 
     # Q 2.2 - Variational Auto-Encoder
-    train_loss_epoch, valid_loss_epoch = main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
     fig2 = plt.figure(2)
     fig2.set_tight_layout(False)
     plt.figure(fig2)
     plt.clf()
-    plt.plot(valid_loss_epoch)
-    plt.title("Validation loss")
+    plt.plot(valid_loss_recon)
+    plt.title("Validation recon_loss")
     plt.xlabel("epoch")
     plt.ylabel("loss")
-    plt.savefig("data/vae_valid_losses.png")
+    plt.savefig("data/vae_recon_losses.png")
     plt.clf()
-    plt.plot(train_loss_epoch)
-    plt.title("Training loss")
+    plt.plot(valid_loss_kl)
+    plt.title("Validation kl_loss")
     plt.xlabel("epoch")
     plt.ylabel("loss")
-    plt.savefig("data/vae_train_losses.png")
+    plt.savefig("data/vae_kl_losses.png")
 
 
     # Q 2.3.1 - Beta-VAE (constant beta)
     # Run for beta values 0.8, 1.2
-    # main('vae_latent1024_beta_constant0.8', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 0.8, num_epochs = 20, latent_size = 1024)
+    _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024_beta_constant0.8', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 0.8, num_epochs = 20, latent_size = 1024)
+    fig2 = plt.figure(2)
+    fig2.set_tight_layout(False)
+    plt.figure(fig2)
+    plt.clf()
+    plt.plot(valid_loss_recon)
+    plt.title("Validation recon_loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.savefig("data/beta_vae_recon_losses.png")
+    plt.clf()
+    plt.plot(valid_loss_kl)
+    plt.title("Validation kl_loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.savefig("data/beta_vae_kl_losses.png")
 
     # Q 2.3.2 - VAE with annealed beta (linear schedule)
     # main(
