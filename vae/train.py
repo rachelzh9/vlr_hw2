@@ -49,7 +49,7 @@ def linear_beta_scheduler(max_epochs=None, target_val=1):
     from 0 at epoch 0 to target_val at epoch max_epochs"""
 
     def _helper(epoch):
-        ...
+        return (target_val*epoch)/max_epochs 
 
     return _helper
 
@@ -182,45 +182,54 @@ if __name__ == "__main__":
     # plt.savefig("data/train_losses.png")
 
     # Q 2.2 - Variational Auto-Encoder
-    _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
-    fig2 = plt.figure(2)
-    fig2.set_tight_layout(False)
-    plt.figure(fig2)
-    plt.clf()
-    plt.plot(valid_loss_recon)
-    plt.title("Validation recon_loss")
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.savefig("data/vae_recon_losses.png")
-    plt.clf()
-    plt.plot(valid_loss_kl)
-    plt.title("Validation kl_loss")
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.savefig("data/vae_kl_losses.png")
+    # _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    # fig2 = plt.figure(2)
+    # fig2.set_tight_layout(False)
+    # plt.figure(fig2)
+    # plt.clf()
+    # plt.plot(valid_loss_recon)
+    # plt.title("Validation recon_loss")
+    # plt.xlabel("epoch")
+    # plt.ylabel("loss")
+    # plt.savefig("data/vae_recon_losses.png")
+    # plt.clf()
+    # plt.plot(valid_loss_kl)
+    # plt.title("Validation kl_loss")
+    # plt.xlabel("epoch")
+    # plt.ylabel("loss")
+    # plt.savefig("data/vae_kl_losses.png")
 
 
     # Q 2.3.1 - Beta-VAE (constant beta)
     # Run for beta values 0.8, 1.2
-    _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024_beta_constant0.8', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 0.8, num_epochs = 20, latent_size = 1024)
-    fig2 = plt.figure(2)
+    # _, valid_loss_recon, _, valid_loss_kl = main('vae_latent1024_beta_constant0.8', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 0.5, num_epochs = 20, latent_size = 1024)
+    # fig2 = plt.figure()
+    # fig2.set_tight_layout(False)
+    # plt.figure(fig2.number)
+    # plt.clf()
+    # plt.plot(valid_loss_recon)
+    # plt.title("Validation recon_loss")
+    # plt.xlabel("epoch")
+    # plt.ylabel("loss")
+    # plt.savefig("data/beta_vae_recon_losses.png")
+    # plt.clf()
+    # plt.plot(valid_loss_kl)
+    # plt.title("Validation kl_loss")
+    # plt.xlabel("epoch")
+    # plt.ylabel("loss")
+    # plt.savefig("data/beta_vae_kl_losses.png")
+
+    # Q 2.3.2 - VAE with annealed beta (linear schedule)
+    _, valid_loss_recon, _, _ = main(
+        'vae_latent1024_beta_linear1', loss_mode = 'vae', beta_mode = 'linear',
+        target_beta_val = 1, num_epochs = 20, latent_size = 1024
+    )
+    fig2 = plt.figure()
     fig2.set_tight_layout(False)
-    plt.figure(fig2)
+    plt.figure(fig2.number)
     plt.clf()
     plt.plot(valid_loss_recon)
     plt.title("Validation recon_loss")
     plt.xlabel("epoch")
     plt.ylabel("loss")
-    plt.savefig("data/beta_vae_recon_losses.png")
-    plt.clf()
-    plt.plot(valid_loss_kl)
-    plt.title("Validation kl_loss")
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.savefig("data/beta_vae_kl_losses.png")
-
-    # Q 2.3.2 - VAE with annealed beta (linear schedule)
-    # main(
-    #     'vae_latent1024_beta_linear1', loss_mode = 'vae', beta_mode = 'linear',
-    #     target_beta_val = 1, num_epochs = 20, latent_size = 1024
-    # )
+    plt.savefig("data/linear_beta_vae_recon_losses.png")
